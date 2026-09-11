@@ -111,12 +111,45 @@ impl StorageEngine {
     }
 
     pub fn list_files(&self) -> Vec<FileMetadata> {
+        self.search_files(None, None)
+    }
+
+    pub fn search_files(&self, query: Option<&str>, ext: Option<&str>) -> Vec<FileMetadata> {
         if let Ok(map) = self.files.read() {
-            let mut list: Vec<FileMetadata> = map.values().cloned().collect();
+            let mut list: Vec<FileMetadata> = map
+                .values()
+                .filter(|file| {
+                    let matches_query = match query {
+                        Some(q) => file.filename.to_lowercase().contains(&q.to_lowercase()),
+                        None => true,
+                    };
+                    let matches_ext = match ext {
+                        Some(e) => {
+                            let expected = e.trim_start_matches('.').to_lowercase();
+                            std::path::Path::new(&file.filename)
+                                .extension()
+                                .and_then(|ext_str| ext_str.to_str())
+                                .map(|actual| actual.to_lowercase() == expected)
+                                .unwrap_or(false)
+                        }
+                        None => true,
+                    };
+                    matches_query && matches_ext
+                })
+                .cloned()
+                .collect();
             list.sort_by(|a, b| b.created_at.cmp(&a.created_at));
             list
         } else {
             Vec::new()
+        }
+    }
+
+    pub fn file_exists(&self, id: &str) -> bool {
+        if let Ok(map) = self.files.read() {
+            map.contains_key(id)
+        } else {
+            false
         }
     }
 
