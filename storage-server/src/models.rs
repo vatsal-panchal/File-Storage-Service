@@ -36,3 +36,15 @@ pub struct HealthResponse {
     pub files_count: usize,
     pub total_bytes: u64,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct FileQuery {
+    pub q: Option<String>,
+    pub ext: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileExistsResponse {
+    pub exists: bool,
+    pub id: String,
+}
