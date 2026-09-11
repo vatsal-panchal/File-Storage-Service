@@ -25,6 +25,14 @@ async function run() {
     const files = await client.listFiles();
     console.log(files);
 
+    console.log("\nChecking file existence for ID:", uploaded.id);
+    const existsBefore = await client.checkFileExists(uploaded.id);
+    console.log("File exists:", existsBefore);
+
+    console.log("\nSearching files with query 'sample' and extension 'txt':");
+    const matchedFiles = await client.listFiles({ query: "sample", extension: "txt" });
+    console.log("Matched files count:", matchedFiles.length);
+
     console.log("\nFetching file info for ID:", uploaded.id);
     const info = await client.getFileInfo(uploaded.id);
     console.log(info);
