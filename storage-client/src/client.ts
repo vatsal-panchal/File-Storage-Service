@@ -32,6 +32,16 @@ export interface HealthResponse {
   total_bytes: number;
 }
 
+export interface FileFilterOptions {
+  query?: string;
+  extension?: string;
+}
+
+export interface FileExistsResponse {
+  exists: boolean;
+  id: string;
+}
+
 export class FileStorageClient {
   private baseUrl: string;
 
@@ -74,13 +84,30 @@ export class FileStorageClient {
     return data.file;
   }
 
-  async listFiles(): Promise<FileMetadata[]> {
-    const res = await fetch(`${this.baseUrl}/files`);
+  async listFiles(options?: FileFilterOptions): Promise<FileMetadata[]> {
+    const url = new URL(`${this.baseUrl}/files`);
+    if (options?.query) {
+      url.searchParams.set("q", options.query);
+    }
+    if (options?.extension) {
+      url.searchParams.set("ext", options.extension);
+    }
+
+    const res = await fetch(url.toString());
     if (!res.ok) {
       throw new Error(`Failed to list files: ${res.statusText}`);
     }
     const data = (await res.json()) as FileListResponse;
     return data.files;
+  }
+
+  async checkFileExists(id: string): Promise<boolean> {
+    const res = await fetch(`${this.baseUrl}/files/${id}/exists`);
+    if (!res.ok) {
+      return false;
+    }
+    const data = (await res.json()) as FileExistsResponse;
+    return data.exists;
   }
 
   async getFileInfo(id: string): Promise<FileMetadata> {
