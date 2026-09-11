@@ -1,9 +1,12 @@
 use crate::engine::StorageEngine;
 use crate::error::AppError;
-use crate::models::{DeleteResponse, FileListResponse, HealthResponse, UploadResponse};
+use crate::models::{
+    DeleteResponse, FileExistsResponse, FileListResponse, FileQuery, HealthResponse,
+    UploadResponse,
+};
 use axum::{
     body::Body,
-    extract::{Multipart, Path, State},
+    extract::{Multipart, Path, Query, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Response},
     Json,
@@ -62,13 +65,22 @@ pub async fn upload_file(
 
 pub async fn list_files(
     State(engine): State<Arc<StorageEngine>>,
+    Query(params): Query<FileQuery>,
 ) -> Result<Json<FileListResponse>, AppError> {
-    let files = engine.list_files();
+    let files = engine.search_files(params.q.as_deref(), params.ext.as_deref());
     Ok(Json(FileListResponse {
         success: true,
         count: files.len(),
         files,
     }))
+}
+
+pub async fn check_file_exists(
+    State(engine): State<Arc<StorageEngine>>,
+    Path(id): Path<String>,
+) -> Result<Json<FileExistsResponse>, AppError> {
+    let exists = engine.file_exists(&id);
+    Ok(Json(FileExistsResponse { exists, id }))
 }
 
 pub async fn get_file_info(

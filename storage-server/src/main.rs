@@ -33,6 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/files/upload", post(handlers::upload_file))
         .route("/files/:id", get(handlers::download_file))
         .route("/files/:id/info", get(handlers::get_file_info))
+        .route("/files/:id/exists", get(handlers::check_file_exists))
         .route("/files/:id", delete(handlers::delete_file))
         .layer(cors)
         .with_state(engine);
